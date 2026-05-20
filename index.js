@@ -1,12 +1,12 @@
 const express = require('express');
+const dotenv=require('dotenv')
+const cors=require('cors')
 const { MongoClient,ServerApiVersion } = require('mongodb');
 const app = express();
 const port =process.env.PORT|| 8000;
+dotenv.config()
 
-
-
-
-const uri = "mongodb://studynook:QmHyFfMXbHB9eW52@ac-tg1a4el-shard-00-00.twjplkw.mongodb.net:27017,ac-tg1a4el-shard-00-01.twjplkw.mongodb.net:27017,ac-tg1a4el-shard-00-02.twjplkw.mongodb.net:27017/?ssl=true&replicaSet=atlas-4nelvq-shard-0&authSource=admin&appName=Cluster0";
+const uri = process.env.MONGO_URI;
 
 
 const client = new MongoClient(uri, {
@@ -17,14 +17,34 @@ const client = new MongoClient(uri, {
   }
 })
 
-
+app.use(cors())
+app.use(express.json())
 async function run() {
   try {
     await client.connect();
+    const db= client.db('study')
+    const roomsCollection=db.collection('rooms')
+
+
+
+
+    app.post('/rooms', async(req,res)=>{
+      const data=req.body
+      console.log(data)
+      const result= await roomsCollection.insertOne(data)
+    })
+    app.get('/rooms',async(req,res)=>{   
+      const result=await roomsCollection.find().toArray()
+      res.send(result)
+    })
+
+
+
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
