@@ -23,7 +23,7 @@ async function run() {
     await client.connect();
     const db = client.db("study");
     const roomsCollection = db.collection("rooms");
-    const bookingCollection= db.collection('bookings')
+    const bookingCollection = db.collection("bookings");
 
     app.post("/rooms", async (req, res) => {
       const data = req.body;
@@ -40,13 +40,13 @@ async function run() {
       res.send(result);
     });
 
-      app.delete("/rooms/:id", async (req, res) => {
+    app.delete("/rooms/:id", async (req, res) => {
       const { id } = req.params;
       const result = await roomsCollection.deleteOne({
         _id: new ObjectId(id),
       });
       res.send(result);
-    })
+    });
 
     app.get("/rooms", async (req, res) => {
       const result = await roomsCollection.find().toArray();
@@ -70,14 +70,41 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/bookings', async(req,res)=>{
-      const bookingData= req.body
-      
-      const result= await bookingCollection.insertOne(bookingData)
+    app.post("/bookings", async (req, res) => {
+      try {
+        const bookingData = req.body;
+
+        const alreadyBooked = await bookingCollection.findOne({
+          roomId: bookingData?.roomId,
+          date: bookingData?.date,
+          timeSlot: bookingData?.timeSlot,
+        });
+        if (alreadyBooked) {
+          return res.status(400).send({
+            success: false,
+            message:
+              "This slot is already booked. Please choose a different time or date",
+          });
+        }
+
+        const result = await bookingCollection.insertOne(bookingData);
+        res.send({
+          success: true,
+          result,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    app.get('/bookings/:userId', async(req,res)=>{
+      const {userId}=req.params;
+      const result= await bookingCollection.find({userId:userId}).toArray()
       res.send(result)
     })
-
-
 
     await client.db("admin").command({ ping: 1 });
     console.log(
