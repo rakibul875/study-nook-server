@@ -23,6 +23,7 @@ async function run() {
     await client.connect();
     const db = client.db("study");
     const roomsCollection = db.collection("rooms");
+    const bookingCollection= db.collection('bookings')
 
     app.post("/rooms", async (req, res) => {
       const data = req.body;
@@ -68,6 +69,15 @@ async function run() {
       const result = await roomsCollection.find({ userId }).toArray();
       res.send(result);
     });
+
+    app.post('/bookings', async(req,res)=>{
+      const bookingData= req.body
+      
+      const result= await bookingCollection.insertOne(bookingData)
+      res.send(result)
+    })
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
