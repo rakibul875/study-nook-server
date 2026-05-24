@@ -100,11 +100,20 @@ async function run() {
       }
     });
 
-    app.get('/bookings/:userId', async(req,res)=>{
-      const {userId}=req.params;
-      const result= await bookingCollection.find({userId:userId}).toArray()
-      res.send(result)
-    })
+    app.get("/bookings/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const result = await bookingCollection.find({ userId: userId }).toArray();
+      res.send(result);
+    });
+    app.patch("/bookings/:id", async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+      const result = await bookingCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: status } },
+      );
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
