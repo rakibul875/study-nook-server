@@ -27,8 +27,16 @@ async function run() {
 
     app.post("/rooms", async (req, res) => {
       const data = req.body;
-       data.hourlyRate = Number(data.hourlyRate)
+      data.hourlyRate = Number(data.hourlyRate);
       const result = await roomsCollection.insertOne(data);
+    });
+    app.get("/features", async (req, res) => {
+      const result = await roomsCollection
+        .find()
+        .sort({ _id: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
     });
     app.patch("/rooms/:id", async (req, res) => {
       const { id } = req.params;
@@ -68,11 +76,19 @@ async function run() {
       const result = await roomsCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/rooms/:id", async (req, res) => {
-      const { id } = req.params;
-      const result = await roomsCollection.findOne({ _id: new ObjectId(id) });
-      res.send(result);
-    });
+    app.get(
+      "/rooms/:id",
+      (req, res, next) => {
+        const header = req.headers.authorization;
+          next();
+       
+      },
+      async (req, res) => {
+        const { id } = req.params;
+        const result = await roomsCollection.findOne({ _id: new ObjectId(id) });
+        res.send(result);
+      },
+    );
 
     app.post("/my-rooms", async (req, res) => {
       const data = req.body;
