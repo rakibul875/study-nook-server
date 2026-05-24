@@ -27,7 +27,7 @@ async function run() {
 
     app.post("/rooms", async (req, res) => {
       const data = req.body;
-      console.log(data);
+       data.hourlyRate = Number(data.hourlyRate)
       const result = await roomsCollection.insertOne(data);
     });
     app.patch("/rooms/:id", async (req, res) => {
@@ -49,7 +49,23 @@ async function run() {
     });
 
     app.get("/rooms", async (req, res) => {
-      const result = await roomsCollection.find().toArray();
+      const { search, amenities, minRate, maxRate } = req.query;
+      let query = {};
+      if (search) {
+        query.name = { $regex: search, $options: "i" };
+      }
+      if (amenities) {
+        const amenityArray = amenities.split(",");
+        query.amenities = { $in: amenityArray };
+      }
+
+      if (minRate || maxRate) {
+        query.hourlyRate = {};
+        if (minRate) query.hourlyRate.$gte = Number(minRate);
+        if (maxRate) query.hourlyRate.$lte = Number(maxRate);
+      }
+
+      const result = await roomsCollection.find(query).toArray();
       res.send(result);
     });
     app.get("/rooms/:id", async (req, res) => {
