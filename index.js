@@ -20,16 +20,16 @@ const client = new MongoClient(uri, {
 app.use(cors());
 app.use(express.json());
 
-const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_UEL}/api/auth/jwks`));
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req?.headers.authorization;
   if (!authHeader) {
-   return res.status(401).send({ message: "Unauthorized" });
+    res.status(401).send({ message: "Unauthorized" });
   }
   const token = authHeader.split(" ")[1];
   if (!token) {
-   return res.status(401).send({ message: "Unauthorized" });
+    res.status(401).send({ message: "Unauthorized" });
   }
   try {
     const { payload } = await jwtVerify(token, JWKS);
@@ -41,7 +41,7 @@ const verifyToken = async (req, res, next) => {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db = client.db("study");
     const roomsCollection = db.collection("rooms");
     const bookingCollection = db.collection("bookings");
@@ -50,6 +50,7 @@ async function run() {
       const data = req.body;
       data.hourlyRate = Number(data.hourlyRate);
       const result = await roomsCollection.insertOne(data);
+      res.send(result)
     });
     app.get("/features", async (req, res) => {
       const result = await roomsCollection
@@ -159,7 +160,7 @@ async function run() {
       res.send(result);
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
